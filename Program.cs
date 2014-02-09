@@ -15,60 +15,37 @@ namespace Hearthscraper
         static void Main(string[] args)
         {
             // Settings are in here for the program
-            Hearthscraper.Settings.Settings settings = new Hearthscraper.Settings.Settings();
+            String filePath = @"C:\Users\davidngo\Desktop\cards.txt";
 
             // List of cards
             List<Card> cards = new List<Card>();
-            
-            for (int cardNumber = 0; cardNumber<2000; cardNumber++)
+
+            // Open file
+            using (StreamReader reader = new StreamReader(filePath))
             {
-
-                // build url
-                string currentUrl = settings.Hearthhead.baseURL + cardNumber + settings.Hearthhead.powerURL;
-                
-                // create web request
-                HttpWebRequest request = WebRequest.CreateHttp(currentUrl);
-
-                try
+                // look for cards with an image
+                string currentLine = "";
+                while (reader.Peek() > 0)
                 {
-                    // Get response
-                    WebResponse response = request.GetResponse();
+                    currentLine = reader.ReadLine();
 
-                    // Get stream from response and shove it into a string
-                    StreamReader streamReader = new StreamReader(response.GetResponseStream());
-                    string responseBody = streamReader.ReadToEnd();
-
-                    // if it's a valid card store response in object
-                    if (responseBody.Contains("\r"))
+                    //if the card has an image add to it to the list
+                    if (currentLine.Contains("image"))
                     {
-                        // Get Name
-                        string cardName = responseBody.Substring(responseBody.IndexOf("'") + 1);
-                        cardName = cardName.Substring(0, cardName.IndexOf("'"));
-
-                        // Get Image
-                        int startImage = responseBody.IndexOf("http");
-                        int endImage = responseBody.IndexOf(".png") + 4;
-                        string cardPNG = responseBody.Substring(startImage, endImage - startImage);
-
-                        // add to collection
-                        cards.Add(new Card(cardName, cardPNG));
+                        currentLine = currentLine.Substring(currentLine.IndexOf("{"), currentLine.IndexOf("}") - currentLine.IndexOf("{") + 1);
+                        cards.Add(Utilities.GetCardFromJson(currentLine));
                     }
                 }
-                catch
-                {
-                }
             }
 
-            // write to file
-            string outfile = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Desktop) + Path.DirectorySeparatorChar + "out.txt";
-            StreamWriter streamWriter = new StreamWriter(outfile);
+            // Download Image for each card
             foreach (Card card in cards)
             {
-                streamWriter.WriteLine(card.Name + "\t" + card.Image);
+                using (WebClient webclient = new WebClient())
+                {
+                    webclient.DownloadFile(card.imageURL, @"C:\Users\davidngo\Desktop\out\" + card.image + ".png");
+                }
             }
-            streamWriter.Flush();
-            streamWriter.Close();
-
         }
     }
 }

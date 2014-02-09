@@ -8,13 +8,14 @@ namespace Hearthscraper
 {
     class Card
     {
-        public string Name { get; set; }
-        public string Image { get; set; }
-
-        public Card(string name, string image)
+        public string image { get; set; }
+        private string _imageUrl;
+        public string imageURL
         {
-            Name = name;
-            Image = image;
+            get
+            {
+                return _imageUrl ?? (_imageUrl = "http://wow.zamimg.com/images/hearthstone/cards/enus/medium/" + image + ".png");
+            }
         }
     }
 }
