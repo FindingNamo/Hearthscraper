@@ -14,38 +14,70 @@ namespace Hearthscraper
     {        
         static void Main(string[] args)
         {
+            bool parsingMechanics = false;
+
             // Settings are in here for the program
-            String filePath = @"C:\Users\davidngo\Desktop\cards.txt";
+            String tierPath = @"C:\Users\davidngo\Desktop\trump_all.json";
+            String cardPath = @"C:\Users\davidngo\Desktop\cards.txt";
+            
+            // List of card tiers
+            List<CardTier> tiers;
 
             // List of cards
             List<Card> cards = new List<Card>();
 
             // Open file
-            using (StreamReader reader = new StreamReader(filePath))
+            using (StreamReader reader = new StreamReader(tierPath))
             {
                 // look for cards with an image
+                string content = reader.ReadToEnd();
+                tiers = Utilities.GetTiersFromJson(content);
+            }
+
+            using (StreamReader reader = new StreamReader(cardPath))
+            {
                 string currentLine = "";
-                while (reader.Peek() > 0)
+                string jsonString = "";
+                Card currentCard;
+                while (reader.Peek() >= 0)
                 {
+
                     currentLine = reader.ReadLine();
 
-                    //if the card has an image add to it to the list
-                    if (currentLine.Contains("image"))
+                    if (currentLine.Contains("g_hearthstone_mechanics"))
                     {
-                        currentLine = currentLine.Substring(currentLine.IndexOf("{"), currentLine.IndexOf("}") - currentLine.IndexOf("{") + 1);
-                        cards.Add(Utilities.GetCardFromJson(currentLine));
+                        parsingMechanics = true;
+                        continue;
                     }
+
+                    if (!parsingMechanics && currentLine.Contains("\"id\""))
+                    {
+                        jsonString = currentLine.Substring(currentLine.IndexOf("{"), currentLine.IndexOf("}") - currentLine.IndexOf("{") + 1);
+                        currentCard = Utilities.GetCardFromJson(jsonString);
+                        cards.Add(currentCard);
+                    }
+                    parsingMechanics = false;
                 }
             }
 
-            // Download Image for each card
-            foreach (Card card in cards)
+            bool matchFound = false;
+
+            foreach (CardTier tier in tiers)
             {
-                using (WebClient webclient = new WebClient())
+                foreach (Card card in cards)
                 {
-                    webclient.DownloadFile(card.imageURL, @"C:\Users\davidngo\Desktop\out\" + card.image + ".png");
+                    if (tier.name.ToLower() == card.name.ToLower())
+                        matchFound = true;
                 }
+
+                if (!matchFound)
+                {
+                    Console.WriteLine(tier.name);
+                }
+
+                matchFound = false;
             }
+
         }
     }
 }

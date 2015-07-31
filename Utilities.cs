@@ -14,5 +14,12 @@ namespace Hearthscraper
             Card card = JsonConvert.DeserializeObject<Card>(json);
             return card;
         }
+
+        public static List<CardTier> GetTiersFromJson(string json)
+        {
+            List<CardTier> cardsTiers = new List<CardTier>();
+            cardsTiers = JsonConvert.DeserializeObject<List<CardTier>>(json);
+            return cardsTiers;
+        }
     }
 }
